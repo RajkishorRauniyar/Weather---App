@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WeatherVision - AI-Powered Weather App with real-time forecasts, AI insights, and offline support">
+    <meta name="theme-color" content="#0EA5E9">
+    <title>WeatherVision - AI-Powered Weather</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌤️</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🌤️</span>
+                    <h1 class="logo-text">WeatherVision</h1>
+                </div>
+                
+                <div class="header-actions">
+                    <div class="search-container">
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search city, ZIP, or coordinates...">
+                        <button id="searchBtn" class="search-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                        </button>
+                        <div id="searchResults" class="search-results"></div>
+                    </div>
+                    
+                    <button id="gpsBtn" class="icon-btn" title="Use current location">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 2v4m0 12v4M2 12h4m12 0h4"></path>
+                        </svg>
+                    </button>
+                    
+                    <button id="themeToggle" class="icon-btn" title="Toggle theme">
+                        <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                        </svg>
+                        <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                    
+                    <button id="settingsBtn" class="icon-btn" title="Settings">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Saved Locations -->
+        <section class="saved-locations" id="savedLocations">
+            <div class="locations-scroll">
+                <button class="location-tab active" data-index="0">
+                    <span class="location-name">Current</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero Section - Current Weather -->
+            <section class="hero" id="heroSection">
+                <div class="hero-background" id="heroBackground"></div>
+                <div class="hero-content">
+                    <div class="current-weather">
+                        <div class="location-info">
+                            <h2 class="current-location" id="currentLocation">Loading...</h2>
+                            <p class="last-updated" id="lastUpdated"></p>
+                        </div>
+                        <div class="weather-main">
+                            <div class="weather-icon" id="weatherIcon">
+                                <span class="weather-emoji">⛅</span>
+                            </div>
+                            <div class="temperature-display">
+                                <span class="current-temp" id="currentTemp">--°</span>
+                                <span class="temp-unit" id="tempUnit">C</span>
+                            </div>
+                            <p class="weather-condition" id="weatherCondition">Loading...</p>
+                            <p class="high-low" id="highLow">H: --° L: --°</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Stats Grid -->
+            <section class="quick-stats" id="quickStats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M2 12h20"></path>
+                            <circle cx="12" cy="12" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Feels Like</span>
+                        <span class="stat-value" id="feelsLike">--°</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Humidity</span>
+                        <span class="stat-value" id="humidity">--%</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Wind</span>
+                        <span class="stat-value" id="windSpeed">-- km/h</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">UV Index</span>
+                        <span class="stat-value" id="uvIndex">--</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Pressure</span>
+                        <span class="stat-value" id="pressure">-- hPa</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Visibility</span>
+                        <span class="stat-value" id="visibility">-- km</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Hourly Forecast -->
+            <section class="forecast-section">
+                <h2 class="section-title">Hourly Forecast</h2>
+                <div class="hourly-forecast" id="hourlyForecast">
+                    <div class="forecast-scroll">
+                        <!-- Hourly cards will be inserted here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Daily Forecast -->
+            <section class="forecast-section">
+                <h2 class="section-title">7-Day Forecast</h2>
+                <div class="daily-forecast" id="dailyForecast">
+                    <!-- Daily cards will be inserted here -->
+                </div>
+            </section>
+
+            <!-- Astronomy Section -->
+            <section class="astronomy-section">
+                <h2 class="section-title">Sun & Moon</h2>
+                <div class="astronomy-grid">
+                    <div class="astro-card">
+                        <div class="astro-icon">🌅</div>
+                        <div class="astro-info">
+                            <span class="astro-label">Sunrise</span>
+                            <span class="astro-value" id="sunrise">--:--</span>
+                        </div>
+                    </div>
+                    <div class="astro-card">
+                        <div class="astro-icon">🌇</div>
+                        <div class="astro-info">
+                            <span class="astro-label">Sunset</span>
+                            <span class="astro-value" id="sunset">--:--</span>
+                        </div>
+                    </div>
+                    <div class="astro-card">
+                        <div class="astro-icon">🌙</div>
+                        <div class="astro-info">
+                            <span class="astro-label">Moon Phase</span>
+                            <span class="astro-value" id="moonPhase">--</span>
+                        </div>
+                    </div>
+                    <div class="astro-card">
+                        <div class="astro-icon">🌗</div>
+                        <div class="astro-info">
+                            <span class="astro-label">Moonrise</span>
+                            <span class="astro-value" id="moonrise">--:--</span>
+                        </div>
+                    </div>
+                    <div class="astro-card">
+                        <div class="astro-icon">🌘</div>
+                        <div class="astro-info">
+                            <span class="astro-label">Moonset</span>
+                            <span class="astro-value" id="moonset">--:--</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Insights Panel -->
+            <section class="ai-section" id="aiSection">
+                <div class="ai-header">
+                    <div class="ai-title">
+                        <span class="ai-icon">🤖</span>
+                        <h2>AI Insights</h2>
+                    </div>
+                    <button id="aiChatBtn" class="ai-chat-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        Ask AI
+                    </button>
+                </div>
+                <div class="ai-content">
+                    <div class="ai-cards">
+                        <div class="ai-card">
+                            <div class="ai-card-icon">👕</div>
+                            <div class="ai-card-content">
+                                <h3>Clothing Recommendation</h3>
+                                <p id="clothingRec">Loading...</p>
+                            </div>
+                        </div>
+                        <div class="ai-card">
+                            <div class="ai-card-icon">🏃</div>
+                            <div class="ai-card-content">
+                                <h3>Activity Suggestion</h3>
+                                <p id="activityRec">Loading...</p>
+                            </div>
+                        </div>
+                        <div class="ai-card">
+                            <div class="ai-card-icon">💡</div>
+                            <div class="ai-card-content">
+                                <h3>Weather Insight</h3>
+                                <p id="weatherInsight">Loading...</p>
+                            </div>
+                        </div>
+                        <div class="ai-card">
+                            <div class="ai-card-icon">⚠️</div>
+                            <div class="ai-card-content">
+                                <h3>Health Advisory</h3>
+                                <p id="healthAdvisory">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Weather Map -->
+            <section class="map-section" id="mapSection">
+                <h2 class="section-title">Weather Map</h2>
+                <div class="map-container">
+                    <div id="weatherMap"></div>
+                    <div class="map-controls">
+                        <button class="map-layer-btn active" data-layer="temp">Temperature</button>
+                        <button class="map-layer-btn" data-layer="precip">Precipitation</button>
+                        <button class="map-layer-btn" data-layer="clouds">Clouds</button>
+                        <button class="map-layer-btn" data-layer="wind">Wind</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section class="analytics-section" id="analyticsSection">
+                <h2 class="section-title">Weather Analytics</h2>
+                <div class="analytics-tabs">
+                    <button class="analytics-tab active" data-chart="temp">Temperature</button>
+                    <button class="analytics-tab" data-chart="humidity">Humidity</button>
+                    <button class="analytics-tab" data-chart="precip">Precipitation</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="weatherChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Weather Alerts -->
+            <section class="alerts-section" id="alertsSection">
+                <h2 class="section-title">Weather Alerts</h2>
+                <div class="alerts-container" id="alertsContainer">
+                    <p class="no-alerts">No active weather alerts</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Developed by <strong>Rajkishor Rauniyar</strong></p>
+            <p class="api-credit">Weather data by <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a></p>
+        </footer>
+
+        <!-- Settings Modal -->
+        <div class="modal" id="settingsModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Settings</h2>
+                    <button class="modal-close" id="closeSettings">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label>Temperature Unit</label>
+                        <div class="setting-options">
+                            <button class="setting-btn active" data-unit="celsius">°C</button>
+                            <button class="setting-btn" data-unit="fahrenheit">°F</button>
+                            <button class="setting-btn" data-unit="kelvin">K</button>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>Wind Speed Unit</label>
+                        <div class="setting-options">
+                            <button class="setting-btn active" data-wind="kmh">km/h</button>
+                            <button class="setting-btn" data-wind="ms">m/s</button>
+                            <button class="setting-btn" data-wind="mph">mph</button>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>Precipitation Unit</label>
+                        <div class="setting-options">
+                            <button class="setting-btn active" data-precip="mm">mm</button>
+                            <button class="setting-btn" data-precip="in">inches</button>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>Notifications</label>
+                        <div class="toggle-setting">
+                            <span>Daily Summary</span>
+                            <label class="toggle">
+                                <input type="checkbox" id="dailySummaryToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-setting">
+                            <span>Weather Alerts</span>
+                            <label class="toggle">
+                                <input type="checkbox" id="alertsToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Chat Modal -->
+        <div class="modal" id="aiChatModal">
+            <div class="modal-content chat-modal">
+                <div class="modal-header">
+                    <h2>🤖 AI Weather Assistant</h2>
+                    <button class="modal-close" id="closeChat">&times;</button>
+                </div>
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-message bot">
+                            <p>Hello! I'm your AI weather assistant. Ask me anything about the weather!</p>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" placeholder="Ask about weather...">
+                        <button id="sendChatBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>
+                            </svg>
+                        </button>
+                        <button id="voiceInputBtn" title="Voice input">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+            <p>Loading weather data...</p>
+        </div>
+
+        <!-- Offline Indicator -->
+        <div class="offline-indicator" id="offlineIndicator">
+            <span>📡 You're offline - showing cached data</span>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- App JS -->
+    <script src="app.js"></script>
+</body>
+</html>

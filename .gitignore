@@ -1,0 +1,35 @@
+# WeatherVision - AI-Powered Weather App
+# Developed by Rajkishor Rauniyar
+
+# Node dependencies (if any in future)
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+.cache/
+*.css.map
+*.js.map
+
+# Temporary files
+tmp/
+temp/
